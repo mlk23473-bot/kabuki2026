@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>マイスケジュール - 歌舞伎町 UP GATE 2026</title>
+  <title>会場別スケジュール - 歌舞伎町 UP GATE 2026</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 横スクロールバーのスタイルカスタマイズ */
@@ -21,34 +21,45 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+    .modal-enter {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8 selection:bg-indigo-200 selection:text-indigo-900">
-  <div class="max-w-5xl mx-auto">
+  <div class="max-w-6xl mx-auto">
     <!-- ヘッダー -->
     <header class="mb-8 text-center">
       <h1 class="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
         歌舞伎町 UP GATE 2026
       </h1>
-      <p class="text-lg font-bold text-slate-600">自分専用タイムテーブル (5月5日)</p>
+      <p class="text-lg font-bold text-slate-600">会場別タイムテーブル (5月5日)</p>
     </header>
 
-    <!-- ガントチャート (タイムライン表示) -->
+    <!-- ガントチャート (会場軸) -->
     <section class="mb-10">
-      <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        タイムライン
-      </h2>
-      <div class="flex border rounded-xl overflow-hidden bg-white shadow-md">
-        <!-- 左列: アイドル名 -->
-        <div class="w-24 md:w-40 shrink-0 border-r border-slate-200 bg-slate-50 z-20" id="artist-names">
+      <div class="flex justify-between items-end mb-4">
+        <h2 class="text-xl font-bold flex items-center gap-2 text-slate-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" />
+          </svg>
+          会場別タイムライン
+        </h2>
+        <span class="text-[10px] md:text-xs text-slate-400 font-medium">枠をタップすると詳細が表示されます</span>
+      </div>
+      
+      <div class="flex border rounded-xl overflow-hidden bg-white shadow-lg">
+        <!-- 左列: 会場名 -->
+        <div class="w-28 md:w-44 shrink-0 border-r border-slate-200 bg-slate-50 z-20" id="venue-names">
           <!-- JSで生成 -->
         </div>
         <!-- 右列: タイムライン (横スクロール) -->
         <div class="overflow-x-auto flex-grow relative cursor-grab active:cursor-grabbing" id="timeline-scroll-area">
-          <div id="timeline" class="min-w-[700px] md:min-w-[900px] relative">
+          <div id="timeline" class="min-w-[800px] md:min-w-[1000px] relative">
             <!-- JSで生成 -->
           </div>
         </div>
@@ -61,17 +72,41 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
         </svg>
-        時系列リスト
+        時系列スケジュール
       </h2>
-      <div id="schedule-list" class="space-y-3">
+      <div id="schedule-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <!-- JSで生成 -->
       </div>
     </section>
   </div>
 
+  <!-- モーダル詳細表示 -->
+  <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeModal()">
+    <div id="modal-content" class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 modal-enter" onclick="event.stopPropagation()">
+      <div id="modal-badge" class="w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase mb-4"></div>
+      <h3 id="modal-artist" class="text-2xl font-black text-slate-800 mb-2"></h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 text-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="modal-time" class="font-bold"></span>
+        </div>
+        <div class="flex items-center gap-3 text-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span id="modal-venue" class="font-bold"></span>
+        </div>
+      </div>
+      <button class="mt-8 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors" onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+
   <script>
-    // 対象アイドルのスケジュールデータ (修正済み)
-    const scheduleData = [
+    // 全データ（会場表記の正規化済み）
+    const rawData = [
       {
         name: "ミームトーキョー",
         events: [
@@ -87,9 +122,16 @@
         ]
       },
       {
+        name: "CYNHN",
+        events: [
+          { type: "live", start: "17:55", end: "18:20", venue: "新宿LOFT" },
+          { type: "buppan", start: "18:40", end: "19:40", venue: "新宿LOFT" }
+        ]
+      },
+      {
         name: "虹のコンキスタドール",
         events: [
-          { type: "live", start: "18:50", end: "19:20", venue: "Zepp Shinjuku (TOKYO)" },
+          { type: "live", start: "18:50", end: "19:20", venue: "Zepp Shinjuku" },
           { type: "buppan", start: "19:35", end: "20:35", venue: "Zepp Shinjuku" }
         ]
       },
@@ -103,79 +145,100 @@
       {
         name: "ChumToto",
         events: [
-          { type: "live", start: "19:20", end: "19:45", venue: "SHINJUKU WALLY" },
+          { type: "live", start: "19:20", end: "19:45", venue: "新宿WALLY" },
           { type: "buppan", start: "19:55", end: "20:55", venue: "新宿WALLY" }
         ]
       }
     ];
 
-    const startHour = 12; // 12:00開始
-    const endHour = 21;   // 21:00終了
+    // 会場の統合処理 (正規化)
+    function normalizeVenue(venue) {
+        if (venue.includes("Zepp Shinjuku")) return "Zepp Shinjuku";
+        if (venue.includes("WALLY")) return "新宿WALLY";
+        return venue;
+    }
+
+    const venues = [...new Set(rawData.flatMap(item => item.events.map(e => normalizeVenue(e.venue))))].sort();
+    
+    const startHour = 12; 
+    const endHour = 21;   
     const totalMinutes = (endHour - startHour) * 60;
 
-    // "HH:MM" を分に変換
     function timeToMinutes(timeStr) {
       const [h, m] = timeStr.split(':').map(Number);
       return h * 60 + m;
     }
 
-    // 画面のレンダリング
+    function showModal(artist, type, start, end, venue) {
+      const modal = document.getElementById('modal-overlay');
+      const badge = document.getElementById('modal-badge');
+      const artistEl = document.getElementById('modal-artist');
+      const timeEl = document.getElementById('modal-time');
+      const venueEl = document.getElementById('modal-venue');
+
+      badge.innerText = type === 'live' ? 'LIVE' : '特典会';
+      badge.className = `w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase mb-4 ${type === 'live' ? 'bg-pink-100 text-pink-700' : 'bg-indigo-100 text-indigo-700'}`;
+      
+      artistEl.innerText = artist;
+      timeEl.innerText = `${start} 〜 ${end}`;
+      venueEl.innerText = venue;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+
     function render() {
-      const namesContainer = document.getElementById('artist-names');
+      const namesContainer = document.getElementById('venue-names');
       const timelineContainer = document.getElementById('timeline');
       const listContainer = document.getElementById('schedule-list');
       
-      let namesHtml = `<div class="h-8 border-b border-slate-200"></div>`; // ヘッダー用余白
+      let namesHtml = `<div class="h-8 border-b border-slate-200"></div>`;
       let timelineHtml = `<div class="relative h-8 border-b border-slate-200 bg-white">`;
       
-      // 1. タイムラインの目盛り線を生成
       for (let h = startHour; h <= endHour; h++) {
         const leftPct = ((h - startHour) * 60 / totalMinutes) * 100;
         timelineHtml += `
-          <div class="absolute top-2 text-xs text-slate-500 font-bold -translate-x-1/2" style="left: ${leftPct}%">${h}:00</div>
-          <div class="absolute top-8 w-px bg-slate-200 border-dashed" style="left: ${leftPct}%; height: ${scheduleData.length * 80}px; z-index: 0;"></div>
+          <div class="absolute top-1.5 text-[10px] md:text-xs text-slate-400 font-bold -translate-x-1/2" style="left: ${leftPct}%">${h}:00</div>
+          <div class="absolute top-8 w-px bg-slate-100 h-full z-0" style="left: ${leftPct}%;"></div>
         `;
-        // 30分の線も薄く追加
-        if (h < endHour) {
-            const halfPct = ((h - startHour + 0.5) * 60 / totalMinutes) * 100;
-            timelineHtml += `<div class="absolute top-8 w-px bg-slate-100" style="left: ${halfPct}%; height: ${scheduleData.length * 80}px; z-index: 0;"></div>`;
-        }
       }
       timelineHtml += `</div>`;
       
-      // 2. 各アイドルの行とブロックを生成
-      scheduleData.forEach((artist) => {
-        // 左側の名前列
+      venues.forEach((venue) => {
         namesHtml += `
-          <div class="h-20 border-b border-slate-100 flex items-center justify-center p-2 text-center text-xs md:text-sm font-bold text-slate-700 break-words">
-            ${artist.name}
+          <div class="h-24 border-b border-slate-100 flex items-center px-3 text-xs md:text-sm font-bold text-slate-600 bg-slate-50/50">
+            ${venue}
           </div>
         `;
         
-        // 右側のタイムライン列
-        timelineHtml += `<div class="relative h-20 border-b border-slate-100 group hover:bg-slate-50/50 transition-colors">`;
+        timelineHtml += `<div class="relative h-24 border-b border-slate-100 group hover:bg-slate-50/50 transition-colors">`;
         
-        artist.events.forEach(event => {
-          const startMin = timeToMinutes(event.start);
-          const endMin = timeToMinutes(event.end);
-          const leftPct = ((startMin - startHour * 60) / totalMinutes) * 100;
-          const widthPct = ((endMin - startMin) / totalMinutes) * 100;
-          
-          const isLive = event.type === 'live';
-          // ライブはピンク系、特典会はブルー系のグラデーション
-          const bgColor = isLive ? 'bg-gradient-to-r from-pink-500 to-rose-500' : 'bg-gradient-to-r from-cyan-500 to-blue-500';
-          const label = isLive ? '🎤 LIVE' : '📸 特典会';
-          
-          timelineHtml += `
-            <div class="absolute top-2 bottom-2 rounded shadow-sm ${bgColor} text-white p-1.5 flex flex-col justify-between z-10 hover:z-20 hover:scale-[1.02] hover:shadow-md transition-all duration-200" 
-                 style="left: ${leftPct}%; width: ${widthPct}%;" title="${artist.name} - ${label} \n時間: ${event.start}〜${event.end} \n会場: ${event.venue}">
-              <div class="flex justify-between items-start gap-1">
-                <span class="font-bold drop-shadow-sm text-[10px] md:text-xs whitespace-nowrap overflow-hidden text-ellipsis">${label}</span>
-                <span class="text-[9px] bg-black/20 px-1 rounded whitespace-nowrap">${event.start}-${event.end}</span>
+        rawData.forEach(artist => {
+          artist.events.forEach(event => {
+            if (normalizeVenue(event.venue) !== venue) return;
+
+            const startMin = timeToMinutes(event.start);
+            const endMin = timeToMinutes(event.end);
+            const leftPct = ((startMin - startHour * 60) / totalMinutes) * 100;
+            const widthPct = ((endMin - startMin) / totalMinutes) * 100;
+            
+            const isLive = event.type === 'live';
+            const bgColor = isLive ? 'bg-gradient-to-br from-pink-500 to-rose-600' : 'bg-gradient-to-br from-indigo-500 to-blue-600';
+            const label = isLive ? 'LIVE' : '特典会';
+            
+            timelineHtml += `
+              <div class="absolute top-3 bottom-3 rounded-lg shadow-sm ${bgColor} text-white p-2 flex flex-col justify-center z-10 hover:z-20 hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer overflow-hidden" 
+                   style="left: ${leftPct}%; width: ${widthPct}%;" 
+                   onclick="showModal('${artist.name}', '${event.type}', '${event.start}', '${event.end}', '${event.venue}')">
+                <div class="text-[9px] font-black opacity-80 leading-tight mb-0.5">${label}</div>
+                <div class="font-bold text-[10px] md:text-xs truncate leading-tight mb-1">${artist.name}</div>
+                <div class="text-[8px] font-medium bg-black/10 rounded px-1 w-fit">${event.start}</div>
               </div>
-              <div class="truncate font-medium text-[9px] md:text-xs drop-shadow-sm mt-0.5 opacity-95">@${event.venue}</div>
-            </div>
-          `;
+            `;
+          });
         });
         timelineHtml += `</div>`;
       });
@@ -183,9 +246,8 @@
       namesContainer.innerHTML = namesHtml;
       timelineContainer.innerHTML = timelineHtml;
       
-      // 3. スケジュールリストの生成 (時間順ソート)
       const allEvents = [];
-      scheduleData.forEach(artist => {
+      rawData.forEach(artist => {
         artist.events.forEach(event => {
           allEvents.push({ ...event, artistName: artist.name });
         });
@@ -195,39 +257,31 @@
       let listHtml = '';
       allEvents.forEach(event => {
         const isLive = event.type === 'live';
-        const badgeColor = isLive ? 'bg-pink-100 text-pink-800 border-pink-200' : 'bg-blue-100 text-blue-800 border-blue-200';
-        const borderColor = isLive ? 'border-l-pink-500' : 'border-l-blue-500';
-        const label = isLive ? 'LIVE' : '特典会';
+        const badgeColor = isLive ? 'bg-pink-100 text-pink-700 border-pink-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200';
+        const label = isLive ? '🎤 LIVE' : '📸 特典会';
         
         listHtml += `
-          <div class="flex flex-col sm:flex-row sm:items-center p-3 md:p-4 rounded-lg border bg-white shadow-sm hover:shadow-md transition-shadow gap-2 md:gap-4 border-l-4 ${borderColor}">
-            <div class="flex items-center gap-2 md:gap-3 min-w-[130px]">
-              <span class="text-lg font-black text-slate-800">${event.start}</span>
-              <span class="text-sm text-slate-400 font-medium">〜 ${event.end}</span>
-            </div>
-            <div class="flex-grow">
-              <div class="font-bold text-base md:text-lg text-slate-800">${event.artistName}</div>
-              <div class="text-xs md:text-sm text-slate-500 flex items-center gap-1 mt-1 font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                </svg>
-                ${event.venue}
+          <div class="flex items-stretch bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-indigo-300 transition-colors cursor-pointer" onclick="showModal('${event.artistName}', '${event.type}', '${event.start}', '${event.end}', '${event.venue}')">
+            <div class="w-1.5 ${isLive ? 'bg-pink-500' : 'bg-indigo-500'}"></div>
+            <div class="flex-grow p-3 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <div class="font-black text-slate-800 text-base truncate">${event.artistName}</div>
+                <span class="px-2 py-0.5 rounded-full text-[8px] font-black border uppercase ${badgeColor}">${label}</span>
               </div>
-            </div>
-            <div class="shrink-0 flex sm:block justify-end">
-              <span class="px-3 py-1 rounded-full text-xs font-bold border shadow-sm ${badgeColor}">${label}</span>
+              <div class="flex items-center justify-between text-slate-500">
+                <div class="text-xs font-bold flex items-center gap-1">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                   ${event.venue}
+                </div>
+                <div class="text-xs font-black text-slate-700">${event.start}〜</div>
+              </div>
             </div>
           </div>
         `;
       });
       listContainer.innerHTML = listHtml;
-
-      // タイムラインの初期スクロール位置を調整
-      const scrollArea = document.getElementById('timeline-scroll-area');
-      scrollArea.scrollLeft = 0; 
     }
 
-    // マウスドラッグで横スクロールできるようにする処理
     document.addEventListener('DOMContentLoaded', () => {
       render();
       
@@ -238,6 +292,7 @@
 
       slider.addEventListener('mousedown', (e) => {
         isDown = true;
+        slider.classList.add('active');
         startX = e.pageX - slider.offsetLeft;
         scrollLeft = slider.scrollLeft;
       });
@@ -251,7 +306,7 @@
         if (!isDown) return;
         e.preventDefault();
         const x = e.pageX - slider.offsetLeft;
-        const walk = (x - startX) * 2; // スクロール速度
+        const walk = (x - startX) * 2;
         slider.scrollLeft = scrollLeft - walk;
       });
     });
